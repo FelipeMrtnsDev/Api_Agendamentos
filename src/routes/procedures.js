@@ -10,11 +10,27 @@ router.get("/", checkToken, async (req, res) => {
         const procedures = await Procedures.findAll({
             attributes: {exclude: [ 'createdAt', 'updatedAt' ] } 
         })
-        res.status(200).json({ procedures })
+        res.status(200).json( procedures )
 
     } catch(error) {
         console.log(error)
         res.status(500).json({ msg: "Erro ao listar procedimentos!" })
+    }
+})
+
+router.get("/:id", checkToken, async (req, res) => {
+    const id = req.params.id
+
+    try {
+        const procedure = await Procedures.findOne({ where: { doctor_id: id } });
+
+        if (procedure) {
+            res.status(200).json([procedure]);
+        } else {
+            res.status(404).json({ message: "Procedure not found" });
+        }
+    } catch (error) {
+        res.status(500).json({ message: "Internal server error", error: error.message });
     }
 })
 
