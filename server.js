@@ -6,19 +6,28 @@ import doctors from './src/routes/doctors.js'
 import appointments from './src/routes/appointments.js'
 import admin from './src/routes/admin.js'
 import procedures from './src/routes/procedures.js'
+import cors from 'cors'
 
 dotenv.config()
 
 const app = express()
 
 app.use(express.json())
+app.use(cors());
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    next();
+});
+
 app.use("/auth", auth)
 app.use("/doctors", doctors)
 app.use("/appointments", appointments)
 app.use("/admin", admin)
 app.use("/procedures", procedures)
 
-const PORT = process.env.PORT
+const PORT = 3010
 
 
 sequelize.sync({ force: false })

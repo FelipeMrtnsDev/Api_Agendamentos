@@ -30,14 +30,23 @@ router.post("/register", checkToken, isAdmin, async (req, res) => {
 
 router.get("/", checkToken, async (req, res) => {
     const allDoctors = await Doctors.findAll()
-    res.status(401).json({ allDoctors })
+    res.status(200).json( allDoctors )
 })
 
 router.get("/:id", checkToken, async (req, res) => {
-    const id = req.params
+    const id = req.params.id
 
-    const doctor = await Doctors.findOne(id)
-    res.status(401).json({ doctor })
+    try {
+        const doctor = await Doctors.findOne({ where: { id: id } });
+
+        if (doctor) {
+            res.status(200).json({ doctor });
+        } else {
+            res.status(404).json({ message: "Doctor not found" });
+        }
+    } catch (error) {
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
 })
 
 router.delete("/:id", checkToken, isAdmin, async (req, res) => {
