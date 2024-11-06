@@ -6,30 +6,43 @@ import User from "../model/User.js";
 
 const router = express.Router()
 
-
 router.get("/", checkToken, async (req, res) => {
     try {
         const userId = req.user.id;
 
         const appointments = await Appointments.findAll({
-            where: { user_id: userId }, 
+            where: { user_id: userId },
             include: [
                 {
                     model: Doctors,
-                    attributes: ['id', 'name', 'area'],
+                    attributes: ['id', 'name', 'area', 'gender' ],
                 },
                 {
-                    model: User, 
-                    attributes: ['id', 'name', 'email'], 
+                    model: User,
+                    attributes: ['id', 'name', 'email'],
                 }
             ]
         });
 
-        if(!appointments) {
-            res.status(500).json({ msg: 'Não foram encontradas consultas referentes ao usuário!' })
+        if (appointments.length === 0) {
+            return res.status(404).json({ msg: 'Não foram encontradas consultas referentes ao usuário!' });
         }
 
-        res.status(200).json(appointments);
+        const appointmentsWithDoctorInfos = appointments.map(async (appointment) => {
+            const doctorInfos = await Doctors.findOne({
+                where: { id: appointment.doctor_id },
+                attributes: ['id', 'name', 'area', 'gender'] 
+            });
+
+            return {
+                ...appointment.toJSON(), 
+                doctor: doctorInfos, 
+            };
+        });
+
+        const finalAppointments = await Promise.all(appointmentsWithDoctorInfos);
+
+        res.status(200).json(finalAppointments);
     } catch (error) {
         console.error("Erro ao buscar agendamentos:", error);
         res.status(500).json({ msg: 'Erro ao buscar agendamentos' });
@@ -125,7 +138,7 @@ router.post("/register", checkToken, async (req, res) => {
     }
 });
 
-router.delete("/:id", checkToken, async (req, res) => {
+router.delete("/delete/:id", checkToken, async (req, res) => {
     const appointmentId = req.params.id;
     const userId = req.user.id;
 

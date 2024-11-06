@@ -5,7 +5,7 @@ import { isAdmin, checkToken } from './auth.js'
 const router = express.Router()
 
 
-router.put("/setadmin/:id", checkToken, isAdmin,async (req, res) => {
+router.put("/setadmin/:id", checkToken, isAdmin, async (req, res) => {
     const id = req.params.id
 
     try {

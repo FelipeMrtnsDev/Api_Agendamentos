@@ -1,16 +1,21 @@
 import express from 'express'
 import dotenv from 'dotenv'
-import auth from './src/routes/auth.js'
-import sequelize from './src/config/database.js'
-import doctors from './src/routes/doctors.js'
-import appointments from './src/routes/appointments.js'
-import admin from './src/routes/admin.js'
-import procedures from './src/routes/procedures.js'
+import auth from './routes/auth.js'
+import sequelize from './config/database.js'
+import doctors from './routes/doctors.js'
+import appointments from './routes/appointments.js'
+import admin from './routes/admin.js'
+import procedures from './routes/procedures.js'
+import cors from 'cors'
 
 dotenv.config()
 
 const app = express()
 
+
+app.use(cors({
+    origin: 'http://localhost:3000'
+}));
 app.use(express.json())
 app.use("/auth", auth)
 app.use("/doctors", doctors)

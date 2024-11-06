@@ -4,13 +4,15 @@ import { checkToken, isAdmin } from './auth.js'
 
 const router = express.Router()
 
-router.post("/register", checkToken, isAdmin, async (req, res) => {
+router.post("/register", checkToken, async (req, res) => {
     const { gender, name, area } = req.body
 
-    const doctorExist = await Doctors.findOne({ where: {name: name} })
+    const doctorExist = await Doctors.findOne({
+        where: { name }
+    })
 
     if(doctorExist) {
-        res.status(222).json({ msg: "O doutor ja existe!" })
+        return res.status(409).json({ msg: "Já existe um doutor com esse nome!" })
     }
 
     const doctor = new Doctors({
@@ -19,10 +21,9 @@ router.post("/register", checkToken, isAdmin, async (req, res) => {
         area,
     })
 
-
     try {
         await doctor.save()
-        res.status(401).json({ msg: "Doutor criado com sucesso!"})
+        res.status(201).json({ msg: "Doutor criado com sucesso!"})
     } catch(error) {
         res.send({ msg: 'deu errado' })
     }
@@ -30,7 +31,7 @@ router.post("/register", checkToken, isAdmin, async (req, res) => {
 
 router.get("/", checkToken, async (req, res) => {
     const allDoctors = await Doctors.findAll()
-    res.status(401).json({ allDoctors })
+    res.status(200).json(allDoctors)
 })
 
 router.get("/:id", checkToken, async (req, res) => {
@@ -44,7 +45,7 @@ router.delete("/:id", checkToken, isAdmin, async (req, res) => {
     const id = req.params.id
 
     try {
-        const Doctor = await Doctors.destroy({ where: { id: id } })
+        const Doctor = await Doctors.destroy({ where: { id } })
         res.status(200).json({ msg: 'Doutor removido com sucesso!', Doctor})
     } catch(error) {
         console.log(error)
