@@ -19,20 +19,20 @@ router.get("/", checkToken, async (req, res) => {
 })
 
 router.get("/:id", checkToken, async (req, res) => {
-    const id = req.params.id
+    const id = req.params.id;
 
     try {
-        const procedure = await Procedures.findOne({ where: { doctor_id: id } });
+        const procedures = await Procedures.findAll({ where: { doctor_id: id } });
 
-        if (procedure) {
-            res.status(200).json([procedure]);
+        if (procedures.length > 0) {
+            res.status(200).json(procedures);
         } else {
-            res.status(404).json({ message: "Procedure not found" });
+            res.status(404).json({ message: "No procedures found for this doctor" });
         }
     } catch (error) {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
-})
+});
 
 router.post("/register", checkToken, isAdmin, async (req, res) => {
     const { name, price, doctor_id } = req.body;

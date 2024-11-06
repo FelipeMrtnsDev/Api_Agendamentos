@@ -8,27 +8,29 @@ dotenv.config()
 
 const router = express.Router()
 
-export const checkToken = (req, res, next) => { // verifica se esta logado
-    const authHeader = req.headers['authorization']
-    const token = authHeader && authHeader.split(" ")[1]
+export const checkToken = (req, res, next) => { 
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(" ")[1];
 
-    if(!token) {
-        return res.status(401).json({ msg: 'Acesso negado!' })
+    if (!token) {
+        return res.status(401).json({ msg: 'Acesso negado!' });
     }
 
     try {
-        const secret = process.env.SECRET
-
-        const decoded = jwt.verify(token, secret)
-
+        const secret = process.env.SECRET;
+        const decoded = jwt.verify(token, secret);
+        
         req.user = decoded;
 
-        next()
-    } catch(error) {
-        res.status(400).json({ msg: 'Token inválido' })
-        console.log(error)
+        next();
+    } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ msg: 'Token expirado!' });
+        } else {
+            return res.status(400).json({ msg: 'Token inválido!' });
+        }
     }
-}
+};
 
 export const isAdmin = (req, res, next) => { 
     if(req.user.role !== 'admin') {
@@ -67,7 +69,7 @@ router.post("/login", async (req, res) => {
     const user = await User.findOne({ where: { email: email } })
 
     if (!user) {
-        return res.send({ msg: 'email inválido!' })
+        return res.status(422).json({ msg: 'email inválido!' })
     }
 
     const checkPassword = await bcrypt.compare(password, user.password)
@@ -78,10 +80,14 @@ router.post("/login", async (req, res) => {
 
     try {
         const secret = process.env.SECRET
-        const token = jwt.sign({
-            id: user.id,
-            role: user.role
-        }, secret)
+        const token = jwt.sign(
+            {
+                id: user.id,
+                role: user.role
+            },
+            secret,
+            { expiresIn: '1h' }
+        );
         res.status(200).json({ msg: 'Autentificação realizada com sucesso', token})
     } catch(err) {
         console.log(err)
