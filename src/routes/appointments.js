@@ -66,8 +66,8 @@ router.get("/:id", checkToken, async (req, res) => {
                     attributes: ['id', 'name', 'area'],
                 },
                 {
-                    model: User, // Verifique se o modelo está correto
-                    as: 'usuario', // Adicione o alias correto (usado na query SQL)
+                    model: User, 
+                    as: 'usuario',
                     attributes: ['id', 'name', 'email'],
                 }
             ]
@@ -77,11 +77,11 @@ router.get("/:id", checkToken, async (req, res) => {
             return res.status(404).json({ msg: 'Consulta não encontrada' });
         }
 
-        if (appointment.usuario.id !== userId) { // Usando o alias correto
+        if (appointment.usuario.id !== userId) {
             return res.status(403).json({ msg: 'Acesso negado. Você não pode acessar essa consulta.' });
         }
 
-        res.status(200).json({ appointment });
+        res.status(200).json(appointment);
     } catch (error) {
         console.error("Erro ao buscar consulta:", error);
         res.status(500).json({ msg: 'Erro ao buscar consulta' });
@@ -93,10 +93,10 @@ router.post("/register", checkToken, async (req, res) => {
     const userId = req.user.id
 
     if (!doctor_id) {
-        return res.status(422).json({ msg: 'Selecione um doutor!' });
+        return res.status(402).json({ msg: 'Selecione um doutor!' });
     }
     if (!userId) {
-        return res.status(422).json({ msg: 'Usuario não encontrado!' });
+        return res.status(402).json({ msg: 'Usuario não encontrado!' });
     }
 
     
@@ -105,7 +105,7 @@ router.post("/register", checkToken, async (req, res) => {
     });
     
     if (appointmentAlreadyMarked) {
-        return res.status(422).json({ msg: 'Já há uma consulta marcada nesse horário!' });
+        return res.status(402).json({ msg: 'Já há uma consulta marcada nesse horário!' });
     }
 
     const doctorIdExist = await Doctors.findOne({ where: { id: doctor_id } });

@@ -40,6 +40,24 @@ export const isAdmin = (req, res, next) => {
     next()
 }
 
+router.get('/verify-token', (req, res) => {
+    const authHeader = req.headers['authorization'];
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: 'Authorization token missing or invalid' });
+    }
+
+    const token = authHeader.split(' ')[1];  
+
+    jwt.verify(token, process.env.SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(401).json({ message: 'Invalid or expired token' });
+        }
+
+        res.status(200).json({ message: 'Token is valid', userId: decoded.id });
+    });
+});
+
 router.get("/user/:id", checkToken, isAdmin, async (req, res) => {
     const id = req.params.id
 
