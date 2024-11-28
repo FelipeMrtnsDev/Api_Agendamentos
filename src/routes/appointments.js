@@ -3,6 +3,7 @@ import Doctors from "../model/Doctors.js";
 import express from 'express'
 import { checkToken, isAdmin } from "./auth.js";
 import User from "../model/User.js";
+import Procedures from "../model/Procedures.js";
 
 const router = express.Router()
 
@@ -89,23 +90,34 @@ router.get("/:id", checkToken, async (req, res) => {
 });
 
 router.post("/register", checkToken, async (req, res) => {
-    const { date, time, topic, doctor_id } = req.body;
+    const { date, time, doctor_id, procedure_id } = req.body;
     const userId = req.user.id
 
+    console.log(doctor_id, procedure_id)
+
     if (!doctor_id) {
-        return res.status(402).json({ msg: 'Selecione um doutor!' });
+        return res.status(404).json({ msg: 'Selecione um doutor!' });
     }
+
     if (!userId) {
-        return res.status(402).json({ msg: 'Usuario não encontrado!' });
+        return res.status(404).json({ msg: 'Usuario não encontrado!' });
     }
 
     
     const appointmentAlreadyMarked = await Appointments.findOne({
-        where: { date: date, time: time, doctor_id: doctor_id}
+        where: { date, time, doctor_id }
     });
     
     if (appointmentAlreadyMarked) {
-        return res.status(402).json({ msg: 'Já há uma consulta marcada nesse horário!' });
+        return res.status(404).json({ msg: 'Já há uma consulta marcada nesse horário!' });
+    }
+
+    const procedureAlreadyExist = await Procedures.findOne({
+        where: { doctor_id, id: procedure_id }
+    });
+
+    if (!procedureAlreadyExist) {
+        return res.status(404).json({ msg: 'Não existe um serviço vinculado a esse doutor!' });
     }
 
     const doctorIdExist = await Doctors.findOne({ where: { id: doctor_id } });
@@ -124,7 +136,7 @@ router.post("/register", checkToken, async (req, res) => {
     const appointment = new Appointments({
         date,
         time,
-        topic,
+        topic: procedureAlreadyExist.name,
         doctor_id,
         user_id: userId 
     });
@@ -176,7 +188,7 @@ router.put("/update/:id", checkToken, isAdmin, async (req, res) => {
         if (doctor_id) {
             const doctor = await Doctors.findOne({ where: { id: doctor_id } });
             if (!doctor) {
-                return res.status(422).json({ msg: "Doutor não registrado!" });
+                return res.status(404).json({ msg: "Doutor não registrado!" });
             }
         }
 

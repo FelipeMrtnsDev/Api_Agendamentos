@@ -58,8 +58,8 @@ router.get('/verify-token', (req, res) => {
     });
 });
 
-router.get("/user/:id", checkToken, isAdmin, async (req, res) => {
-    const id = req.params.id
+router.get("/user", checkToken, async (req, res) => {
+    const id = req.user.id
 
     const user = await User.findByPk(id, {
         attributes: { exclude: ['password', 'createdAt', 'updatedAt'] }
@@ -69,7 +69,7 @@ router.get("/user/:id", checkToken, isAdmin, async (req, res) => {
         return res.status(440).json({ msg: 'Usuário não encontrado' })
     }
 
-    res.status(200).json({ user })
+    res.status(200).json(user)
 })
 
 router.post("/login", async (req, res) => {

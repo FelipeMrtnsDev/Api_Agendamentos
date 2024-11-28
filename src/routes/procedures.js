@@ -18,11 +18,11 @@ router.get("/", checkToken, async (req, res) => {
     }
 })
 
-router.get("/:id", checkToken, async (req, res) => {
-    const id = req.params.id;
+router.get("/:idDoctor", checkToken, async (req, res) => {
+    const idDoctor = req.params.idDoctor;
 
     try {
-        const procedures = await Procedures.findAll({ where: { doctor_id: id } });
+        const procedures = await Procedures.findAll({ where: { doctor_id: idDoctor } });
 
         if (procedures.length > 0) {
             res.status(200).json(procedures);
