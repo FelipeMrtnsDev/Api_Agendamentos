@@ -1,4 +1,4 @@
-import { DataTypes } from 'sequelize';
+import { DataTypes, FLOAT } from 'sequelize';
 import db from '../config/database.js';
 import User from '../model/User.js';
 import Doctor from '../model/Doctors.js';
@@ -19,6 +19,10 @@ const Appointments = db.define('Appointments', {
     },
     topic: {
         type: DataTypes.STRING,
+        allowNull: false
+    },
+    value: {
+        type: DataTypes.FLOAT,
         allowNull: false
     }
 }, {
