@@ -1,17 +1,20 @@
-import { Sequelize } from 'sequelize'
-import dotenv from 'dotenv'
+import { Sequelize } from 'sequelize';
+import dotenv from 'dotenv';
+import pg from 'pg';
 
-dotenv.config()
+dotenv.config();
 
-const sequelize = new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASSWORD,
-    {
-        host: process.env.DB_HOST, 
-        dialect: 'mysql', 
-        port: Number(process.env.DB_PORT) 
-    }
-);
+const neonDB = new Sequelize(process.env.NEON_URL, {
+    dialect: 'postgres',
+    dialectModule: pg,
+    logging: false,
+    ssl: true,
+    dialectOptions: {
+        ssl: {
+            require: true,
+            rejectUnauthorized: false,
+        },
+    },
+});
 
-export default sequelize
+export default neonDB;

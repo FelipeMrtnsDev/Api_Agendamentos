@@ -1,7 +1,7 @@
-import sequelize from '../config/database.js'
 import { DataTypes } from 'sequelize';
+import neonDB from '../config/database.js';
 
-const Doctors = sequelize.define('doctors', {
+const Doctors = neonDB.define('doctors', {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,

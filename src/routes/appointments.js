@@ -50,6 +50,46 @@ router.get("/", checkToken, async (req, res) => {
     }
 });
 
+router.get("/byadmin", checkToken, isAdmin, async (req, res) => {
+    try {
+        const appointments = await Appointments.findAll({
+            include: [
+                {
+                    model: Doctors,
+                    attributes: ['id', 'name', 'area', 'gender' ],
+                },
+                {
+                    model: User,
+                    attributes: ['id', 'name', 'email'],
+                }
+            ]
+        });
+
+        if (appointments.length === 0) {
+            return res.status(404).json({ msg: 'Não foram encontradas consultas referentes ao usuário!' });
+        }
+
+        const appointmentsWithDoctorInfos = appointments.map(async (appointment) => {
+            const doctorInfos = await Doctors.findOne({
+                where: { id: appointment.doctor_id },
+                attributes: ['id', 'name', 'area', 'gender'] 
+            });
+
+            return {
+                ...appointment.toJSON(), 
+                doctor: doctorInfos, 
+            };
+        });
+
+        const finalAppointments = await Promise.all(appointmentsWithDoctorInfos);
+
+        res.status(200).json(finalAppointments);
+    } catch (error) {
+        console.error("Erro ao buscar agendamentos:", error);
+        res.status(500).json({ msg: 'Erro ao buscar agendamentos' });
+    }
+});
+
 router.get("/:id", checkToken, async (req, res) => {
     const appointmentId = req.params.id;
     const userId = req.user.id;
@@ -102,7 +142,72 @@ router.post("/register", checkToken, async (req, res) => {
     if (!userId) {
         return res.status(404).json({ msg: 'Usuario não encontrado!' });
     }
+    
+    const appointmentAlreadyMarked = await Appointments.findOne({
+        where: { date, time, doctor_id }
+    });
+    
+    if (appointmentAlreadyMarked) {
+        return res.status(404).json({ msg: 'Já há uma consulta marcada nesse horário!' });
+    }
 
+    const procedureAlreadyExist = await Procedures.findOne({
+        where: { doctor_id, id: procedure_id }
+    });
+
+    if (!procedureAlreadyExist) {
+        return res.status(404).json({ msg: 'Não existe um serviço vinculado a esse doutor!' });
+    }
+
+    const doctorIdExist = await Doctors.findOne({ where: { id: doctor_id } });
+    
+    if (!doctorIdExist) {
+        return res.status(422).json({ msg: 'Doutor não registrado!' });
+    }
+
+    const AllAppointments = await Appointments.findAll()
+
+    if (AllAppointments.length === 3) {
+        return res.status(422).json({ msg: "Você atingiu o limite de consultas, 3 consultas marcadas!"})
+    }
+    
+    const userIdExist = await User.findOne({ where: { id: userId } });
+    
+    if (!userIdExist) {
+        return res.status(422).json({ msg: 'Usuario não registrado!' });
+    }
+
+    
+    const appointment = new Appointments({
+        date,
+        time,
+        topic: procedureAlreadyExist.name,
+        value: procedureAlreadyExist.price,
+        doctor_id,
+        user_id: userId 
+    });
+    
+    try {
+        await appointment.save();
+        return res.status(200).json({ msg: 'Consulta agendada com sucesso!', appointment });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ msg: 'Algo deu errado', error });
+    }
+});
+
+router.post("/register/byadmin", checkToken, isAdmin, async (req, res) => {
+    const { date, time, doctor_id, procedure_id, user_id } = req.body;
+
+    console.log(doctor_id, procedure_id)
+
+    if (!doctor_id) {
+        return res.status(404).json({ msg: 'Selecione um doutor!' });
+    }
+
+    if (!user_id) {
+        return res.status(404).json({ msg: 'Selecione um usuário!' });
+    }
     
     const appointmentAlreadyMarked = await Appointments.findOne({
         where: { date, time, doctor_id }
@@ -126,7 +231,7 @@ router.post("/register", checkToken, async (req, res) => {
         return res.status(422).json({ msg: 'Doutor não registrado!' });
     }
     
-    const userIdExist = await User.findOne({ where: { id: userId } });
+    const userIdExist = await User.findOne({ where: { id: user_id } });
     
     if (!userIdExist) {
         return res.status(422).json({ msg: 'Usuario não registrado!' });
@@ -137,8 +242,9 @@ router.post("/register", checkToken, async (req, res) => {
         date,
         time,
         topic: procedureAlreadyExist.name,
+        value: procedureAlreadyExist.price,
         doctor_id,
-        user_id: userId 
+        user_id, 
     });
     
     try {
@@ -163,6 +269,25 @@ router.delete("/delete/:id", checkToken, async (req, res) => {
 
         if (appointment.user_id !== userId) {
             return res.status(403).json({ msg: 'Acesso negado. Você não pode cancelar esta consulta.' });
+        }
+
+        await Appointments.destroy({ where: { id: appointmentId } });
+
+        res.status(200).json({ msg: 'Consulta cancelada com sucesso' });
+    } catch (error) {
+        console.error("Erro ao deletar a consulta:", error);
+        res.status(500).json({ msg: 'Erro ao deletar a consulta' });
+    }
+});
+
+router.delete("/delete/:id/byadmin", checkToken, isAdmin, async (req, res) => {
+    const appointmentId = req.params.id;
+
+    try {
+        const appointment = await Appointments.findOne({ where: { id: appointmentId } });
+
+        if (!appointment) {
+            return res.status(404).json({ msg: 'Consulta não encontrada' });
         }
 
         await Appointments.destroy({ where: { id: appointmentId } });

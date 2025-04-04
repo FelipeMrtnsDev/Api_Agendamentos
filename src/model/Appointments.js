@@ -1,9 +1,9 @@
-import { DataTypes, FLOAT } from 'sequelize';
-import db from '../config/database.js';
+import { DataTypes } from 'sequelize';
 import User from '../model/User.js';
 import Doctor from '../model/Doctors.js';
+import neonDB from '../config/database.js';
 
-const Appointments = db.define('Appointments', {
+const Appointments = neonDB.define('Appointments', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,

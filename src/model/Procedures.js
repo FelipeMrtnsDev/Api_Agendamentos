@@ -1,8 +1,8 @@
-import sequelize from '../config/database.js'
+import neonDB from '../config/database.js'
 import Doctors from './Doctors.js';
 import { DataTypes } from 'sequelize';
 
-const Procedures = sequelize.define('procedures', {
+const Procedures = neonDB.define('procedures', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
