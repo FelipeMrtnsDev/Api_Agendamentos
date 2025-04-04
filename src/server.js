@@ -13,12 +13,16 @@ dotenv.config()
 
 const app = express()
 
+const allowedOrigins = [
+    'http://localhost:3000', 
+    'https://agendei.vercel.app', 
+];
 
-app.use(cors({
-    origin: 'http://localhost:3000'
-}));
 app.use(express.json())
 app.use(cors());
+app.use(cors({
+    origin: allowedOrigins,
+}));
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
@@ -33,7 +37,9 @@ app.use("/admin", admin)
 app.use("/procedures", procedures)
 app.use("/users", users)
 
-const PORT = process.env.PORT
+app.get("/", (req, res) => {
+    res.send("API is running...")
+})
 
 neonDB.authenticate()
 .then(() => {
